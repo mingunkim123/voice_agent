@@ -4,6 +4,10 @@
 
 목표는 단순히 데모를 실행하는 것이 아니라, 재현 가능한 실험 플랫폼을 만들고, 여러 시스템 설계 선택이 지연시간, 품질, 비용, 사용자 경험에 어떤 영향을 주는지 분석해 논문으로 정리하는 것이다.
 
+현재 우선순위는 연구용 리팩터링이 아니라 **튜토리얼을 먼저 끝까지 통과하는 것**이다. 각 챕터를 실행하면서 STT, LLM, TTS, pipeline, WebSocket, browser client, VAD, function calling, benchmarking이 각각 무엇을 하는지 확인한 뒤 연구 플랫폼화를 시작한다.
+
+튜토리얼 진행 문서는 [Tutorial-First Guide](tutorial-first-guide.md)를 따른다.
+
 ## 1. 연구 목표
 
 ### 1.1 핵심 질문
@@ -62,7 +66,7 @@ How do design choices in endpointing, buffering, model selection, and streaming 
 - baseline과 ablation 실험 구분이 없다.
 - 논문용 figure/table 생성 파이프라인이 없다.
 
-따라서 첫 단계는 "튜토리얼 코드"를 "실험 가능한 시스템"으로 바꾸는 것이다.
+따라서 첫 단계는 "튜토리얼 코드가 실제로 어디까지 동작하는지 확인하는 것"이다. 그 다음 단계에서 튜토리얼 코드를 실험 가능한 시스템으로 바꾼다.
 
 ## 3. 연구 범위
 
@@ -186,9 +190,34 @@ Codex는 구현, 실험 자동화, 분석 보조를 맡는다.
 
 ## 5. 전체 로드맵
 
-### Phase 0. 저장소 안정화
+### Phase 0. Tutorial pass
 
-목표: 현재 튜토리얼 코드를 신뢰 가능한 출발점으로 만든다.
+목표: 연구용 코드를 만들기 전에 튜토리얼을 순서대로 실행해 현재 repo의 실제 동작 범위와 한계를 확인한다.
+
+작업:
+
+- [Tutorial-First Guide](tutorial-first-guide.md)에 따라 환경을 준비한다.
+- Chapter 1에서 Deepgram STT를 확인한다.
+- Chapter 2에서 LLM streaming과 TTFT를 확인한다.
+- Chapter 3에서 ElevenLabs TTS와 TTFB를 확인한다.
+- Chapter 4에서 sentence buffering pipeline을 확인한다.
+- Chapter 5에서 WebSocket server와 test client를 확인한다.
+- Chapter 7 browser client의 현재 실행 gap을 확인한다.
+- Chapter 6에서 VAD standalone demo를 확인한다.
+- Chapter 8에서 function calling agent loop를 확인한다.
+- Chapter 9에서 component latency benchmark를 확인한다.
+- 실행 중 발견한 오류, missing file, 문서 불일치, latency 관찰값을 기록한다.
+
+완료 기준:
+
+- 각 챕터가 무엇을 하는지 설명할 수 있다.
+- 실제로 실행 가능한 파일과 문서상 존재하지만 없는 파일을 구분했다.
+- STT, LLM, TTS, pipeline, WebSocket, benchmark의 기본 출력 예시를 확인했다.
+- 연구 플랫폼화 전에 고쳐야 할 baseline issue list가 생겼다.
+
+### Phase 0.5. 저장소 안정화
+
+목표: 튜토리얼 통과 중 발견한 문제를 정리해 신뢰 가능한 baseline 출발점으로 만든다.
 
 작업:
 
@@ -201,7 +230,7 @@ Codex는 구현, 실험 자동화, 분석 보조를 맡는다.
 
 완료 기준:
 
-- 새 개발자가 README만 보고 baseline을 실행할 수 있다.
+- 새 개발자가 README와 tutorial guide만 보고 baseline을 실행할 수 있다.
 - 실행 불가능한 문서 지시가 제거되거나 별도 TODO로 표시된다.
 - 환경 변수 누락 시 친절한 에러가 나온다.
 
@@ -989,17 +1018,26 @@ Phrase-level streaming은 더 빠르지만 품질을 얼마나 잃는가?
 
 우리가 다음으로 할 일은 다음 순서가 가장 좋다.
 
-1. `chapters/05_websocket_server/server.py`가 web client를 서빙하도록 수정한다.
-2. `credentials.env` 존재 여부와 필수 key validation을 추가한다.
-3. `http://localhost:8888`에서 end-to-end voice demo를 실행한다.
-4. event logging module을 추가한다.
-5. 첫 baseline log를 만들고 `server_ttfa_ms`, `llm_ttft_ms`, `tts_ttfb_ms`를 계산한다.
+1. [Tutorial-First Guide](tutorial-first-guide.md)를 열고 환경 준비를 완료한다.
+2. `credentials.env`에 Deepgram, OpenAI, ElevenLabs key를 채운다.
+3. Chapter 1부터 Chapter 4까지 component tutorial을 실행한다.
+4. Chapter 5와 Chapter 7로 WebSocket/browser baseline 가능성을 확인한다.
+5. Chapter 6, 8, 9를 실행하며 VAD, tool calling, benchmark 개념을 확인한다.
+6. 튜토리얼 중 발견한 missing file과 실행 gap을 issue list로 만든다.
+7. 그 다음에 `chapters/05_websocket_server/server.py`가 web client를 서빙하도록 수정한다.
+8. 이후 event logging module을 추가한다.
+9. 첫 baseline log를 만들고 `server_ttfa_ms`, `llm_ttft_ms`, `tts_ttfb_ms`를 계산한다.
 
-첫 코드 작업의 목표는 작게 잡는다.
+첫 튜토리얼 작업의 목표는 작게 잡는다.
+
+```text
+One real STT transcript, one streaming LLM response, one streaming TTS audio.
+```
+
+그 다음 코드 작업의 목표는 아래로 잡는다.
 
 ```text
 One real conversation turn, one clean JSONL event log, one latency summary.
 ```
 
 여기까지 되면 이 레포는 더 이상 단순 튜토리얼이 아니라 연구 실험 플랫폼의 씨앗이 된다.
-
